@@ -1,0 +1,1083 @@
+% ============================================================
+%  Preparatório OBI — Aula 02
+%  Stack (Pilha) e Stack Monotônica
+%  Grupo: GEMA
+%  Compilar: pdflatex apresentacao_stack.tex  (2x para refs)
+% ============================================================
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% ── Tema ──────────────────────────────────────────────────
+\usetheme{Madrid}
+\usecolortheme{default}
+
+% ── Pacotes ───────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuges]{babel}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\usepackage{marvosym}
+\usepackage{wasysym}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{adjustbox}
+\tcbuselibrary{skins,breakable,listings}
+\usetikzlibrary{arrows.meta,shapes,positioning,fit,calc,decorations.pathreplacing}
+
+% ── Ajustes para evitar cortes em slides densos ────────────
+\setbeamersize{text margin left=5mm,text margin right=5mm}
+\setlength{\leftmargini}{1.25em}
+\setlength{\leftmarginii}{1em}
+
+\setbeamertemplate{itemize/enumerate body begin}{\small}
+\setbeamertemplate{itemize/enumerate subbody begin}{\footnotesize}
+
+% ── Paleta de cores ───────────────────────────────────────
+\definecolor{gemaBlue}  {RGB}{13,  43,  90}
+\definecolor{gemaCyan}  {RGB}{0,  170, 210}
+\definecolor{gemaRed}   {RGB}{190, 30,  30}
+\definecolor{codeBack}  {RGB}{22,  27,  34}
+\definecolor{codeGreen} {RGB}{80,  200, 120}
+\definecolor{codeBlue}  {RGB}{121, 192, 255}
+\definecolor{codeYellow}{RGB}{255, 210, 70}
+\definecolor{codeOrange}{RGB}{255, 160, 60}
+\definecolor{alertYellow}{RGB}{255,243,176}
+\definecolor{alertBorder}{RGB}{160,110,0}
+
+% ── Cores Beamer ──────────────────────────────────────────
+\setbeamercolor{palette primary}   {bg=gemaBlue,fg=white}
+\setbeamercolor{palette secondary} {bg=gemaBlue!85,fg=white}
+\setbeamercolor{palette tertiary}  {bg=gemaBlue!65,fg=white}
+\setbeamercolor{palette quaternary}{bg=gemaBlue,fg=white}
+\setbeamercolor{structure}         {fg=gemaBlue}
+\setbeamercolor{frametitle}        {fg=white,bg=gemaBlue}
+\setbeamercolor{block title}       {fg=white,bg=gemaBlue}
+\setbeamercolor{block body}        {fg=black,bg=gemaBlue!7}
+\setbeamercolor{block title alerted}{fg=white,bg=gemaRed}
+\setbeamercolor{block body alerted} {fg=black,bg=gemaRed!8}
+\setbeamercolor{block title example}{fg=white,bg=gemaCyan!75!black}
+\setbeamercolor{block body example} {fg=black,bg=gemaCyan!10}
+\setbeamercolor{itemize item}      {fg=gemaCyan!70!black}
+\setbeamercolor{itemize subitem}   {fg=gemaBlue!60}
+
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamerfont{title}     {size=\LARGE,series=\bfseries}
+\setbeamertemplate{navigation symbols}{}
+
+% ── Rodape ────────────────────────────────────────────────
+\setbeamertemplate{footline}{%
+  \leavevmode\hbox{%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=3ex,dp=1.5ex,center]{palette secondary}
+      \footnotesize GEMA
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.34\paperwidth,ht=3ex,dp=1.5ex,center]{palette primary}
+      \footnotesize Stack
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=.33\paperwidth,ht=3ex,dp=1.5ex,right]{palette secondary}
+      \footnotesize \insertframenumber/\inserttotalframenumber\hspace{2mm}
+    \end{beamercolorbox}%
+  }%
+}
+
+% ── Estilo de codigo C++ ──────────────────────────────────
+\lstdefinestyle{cppstyle}{
+  language=C++,
+  backgroundcolor=\color{codeBack},
+  basicstyle=\ttfamily\footnotesize\color{white},
+  keywordstyle=\color{codeBlue}\bfseries,
+  stringstyle=\color{codeOrange},
+  commentstyle=\color{codeGreen}\itshape,
+  numberstyle=\tiny\color{gray!60},
+  identifierstyle=\color{white},
+  morekeywords={stack,vector,deque,string,bool,auto,long},
+  emph={push,pop,top,empty,size,cin,cout,endl,min,max},
+  emphstyle=\color{codeYellow}\bfseries,
+  numbers=left,
+  numbersep=7pt,
+  frame=none,
+  tabsize=4,
+  showstringspaces=false,
+  breaklines=true,
+  columns=flexible,
+  keepspaces=true,
+  xleftmargin=14pt,
+  aboveskip=0pt,
+  belowskip=0pt,
+}
+
+\lstdefinestyle{cppcompact}{
+  style=cppstyle,
+  basicstyle=\ttfamily\tiny\color{white},
+  numberstyle=\tiny\color{gray!60},
+  numbersep=4pt,
+  xleftmargin=9pt,
+  lineskip=-1pt,
+}
+
+% ── Caixas tcolorbox ──────────────────────────────────────
+\tcbset{
+  before skip=2pt,
+  after skip=2pt,
+  boxsep=1pt,
+  caixaBase/.style={
+    enhanced,arc=5pt,boxrule=1pt,
+    left=4pt,right=4pt,top=3pt,bottom=3pt,
+    fonttitle=\bfseries\small,
+  },
+  caixaAzul/.style={
+    caixaBase,
+    colback=gemaBlue!6,colframe=gemaBlue,
+  },
+  caixaVerde/.style={
+    caixaBase,
+    colback=codeGreen!8,colframe=codeGreen!55!black,
+    fonttitle=\bfseries\small\color{codeGreen!35!black},
+  },
+  caixaVermelho/.style={
+    caixaBase,
+    colback=gemaRed!8,colframe=gemaRed,
+    fonttitle=\bfseries\small\color{gemaRed!80!black},
+  },
+  caixaCodigo/.style={
+    enhanced,arc=5pt,boxrule=1pt,
+    colback=codeBack,colframe=gemaCyan!45,
+    left=1pt,right=1pt,top=1pt,bottom=1pt,
+  },
+  caixaAmarelo/.style={
+    caixaBase,
+    colback=alertYellow,colframe=alertBorder,
+    fonttitle=\bfseries\small\color{alertBorder},
+  },
+}
+
+% ── Metadados ─────────────────────────────────────────────
+\title[Aula 02 --- Stack]{Stack (Pilha) e Stack Monotonica}
+\subtitle{Preparatorio OBI --- Aula 02}
+\author[GEMA]{Grupo de Extensao em Maratonas de Programacao}
+\institute{GEMA}
+\date{2025}
+
+% =============================================================
+\begin{document}
+% =============================================================
+
+{
+\setbeamertemplate{footline}{}
+\begin{frame}[noframenumbering]
+  \begin{columns}[c]
+    \column{0.58\textwidth}
+      \vspace{0.3cm}
+      {\fontsize{18}{22}\selectfont\bfseries\color{gemaBlue}
+        Stack e Stack Monotonica\par}
+      \vspace{0.25cm}
+      {\large\color{gemaCyan}
+        Preparatorio OBI --- Aula 02\par}
+      \vspace{0.15cm}
+      {\small\color{gray}
+        Estruturas de Dados $\cdot$ OBI $\cdot$ ICPC\par}
+      \vspace{0.5cm}
+      % \begin{tcolorbox}[caixaAzul,title={}]
+      %   \footnotesize
+      %   \textbf{Publico:} Alunos de Estrutura de Dados\\[2pt]
+      %   \textbf{Nivel:} Iniciante $\to$ Intermediario\\[2pt]
+      %   \textbf{Pre-requisitos:} Arrays e C++ basico
+      % \end{tcolorbox}
+    \column{0.40\textwidth}
+      \centering
+      \includegraphics[width=0.52\linewidth]{logo.png}\\[0.4cm]
+      % \begin{tcolorbox}[
+      %   enhanced,arc=6pt,boxrule=1.5pt,
+      %   colback=white,colframe=gemaBlue!40,
+      %   left=6pt,right=6pt,top=6pt,bottom=6pt,
+      %   width=0.72\linewidth,
+      % ]
+        \centering
+        % \color{gemaBlue!50}\small\bfseries [Logo OBI]\\
+        \includegraphics[width=0.52\textwidth]{images (2).png}
+      % \end{tcolorbox}
+  \end{columns}
+\end{frame}
+}
+
+\begin{frame}{Agenda}
+  \begin{columns}[t]
+    \column{0.47\textwidth}
+      \begin{block}{Parte 1 --- Stack Classica}
+        \begin{enumerate}\small
+          \item O que e uma pilha?
+          \item Comportamento LIFO
+          \item Operacoes: \texttt{push}, \texttt{pop}, \texttt{top}
+          \item Implementacao em C++ (STL)
+          \item Aplicacao: parenteses balanceados
+        \end{enumerate}
+      \end{block}
+    \column{0.47\textwidth}
+      \begin{block}{Parte 2 --- Stack Monotonica}
+        \begin{enumerate}\small
+          \item Motivacao e intuicao
+          \item Crescente vs.\ Decrescente
+          \item Esqueleto universal
+          \item Next Greater Element
+          \item Largest Rectangle in Histogram
+          \item Dicas de prova e padroes
+        \end{enumerate}
+      \end{block}
+  \end{columns}
+\end{frame}
+
+{
+\setbeamertemplate{footline}{}
+\begin{frame}[noframenumbering]
+  \centering\vspace{1.2cm}
+  {\fontsize{40}{48}\selectfont\bfseries\color{gemaBlue} 1}\par
+  \vspace{0.3cm}
+  {\Large\color{gemaCyan}\bfseries Stack Classica}\par
+  \vspace{0.2cm}
+  {\color{gray}\small Definicao $\cdot$ Operacoes $\cdot$ Implementacao}
+\end{frame}
+}
+
+\begin{frame}{O que e uma Stack (Pilha)?}
+  \begin{columns}[c]
+    \column{0.52\textwidth}
+      \begin{tcolorbox}[caixaAzul,title={Definicao}]
+        Uma \textbf{pilha} e uma estrutura linear onde o
+        \textbf{ultimo elemento inserido} e o
+        \textbf{primeiro a ser removido}.
+      \end{tcolorbox}
+      \vspace{0.18cm}
+      \begin{tcolorbox}[caixaVermelho,title={Regra de Ouro --- LIFO}]
+        \textbf{L}ast \textbf{I}n, \textbf{F}irst \textbf{O}ut\\[2pt]
+        So e possivel acessar o \textbf{topo}.
+      \end{tcolorbox}
+      \vspace{0.18cm}
+      \textbf{Analogias do dia a dia:}
+      \begin{itemize}\small
+        \item Pilha de pratos no restaurante
+        \item Ctrl+Z no editor
+        \item Botao Voltar do navegador
+        \item Pilha de livros na mesa
+      \end{itemize}
+    \column{0.45\textwidth}
+      \centering
+      \begin{tikzpicture}[scale=0.88]
+        \foreach \val/\shade/\yy in {
+            10/25/0.00,
+            20/45/0.72,
+            30/65/1.44,
+            40/88/2.16}{
+          \draw[fill=gemaBlue!\shade,draw=gemaBlue,line width=0.8pt,rounded corners=3pt]
+            (0,\yy) rectangle (2.8,\yy+0.62)
+            node[midway,white,font=\bfseries\small]{\val};
+        }
+        \draw[-{Stealth[length=6pt]},gemaCyan,line width=2pt]
+          (3.3,2.47)--(2.9,2.47);
+        \node[right,gemaCyan,font=\bfseries\small] at (3.3,2.47){TOPO};
+        \draw[-{Stealth[length=4pt]},gray,line width=1pt]
+          (3.3,0.31)--(2.9,0.31);
+        \node[right,gray,font=\small] at (3.3,0.31){fundo};
+        \draw[-{Stealth[length=7pt]},codeGreen,line width=2.2pt]
+          (1.4,3.3)--(1.4,2.88);
+        \node[above,codeGreen,font=\bfseries\small] at (1.4,3.3){push(50)};
+        \draw[-{Stealth[length=7pt]},gemaRed,line width=2.2pt,dashed]
+          (-1.1,2.47)--(-0.1,2.47);
+        \node[left,gemaRed,font=\bfseries\small] at (-1.1,2.47){pop()};
+      \end{tikzpicture}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Comportamento LIFO --- Passo a Passo}
+  \centering
+  \begin{adjustbox}{max totalsize={0.98\textwidth}{0.72\textheight},center}
+  \begin{tikzpicture}[scale=0.80]
+    \node[font=\bfseries\small,gemaBlue] at (0.65,3.4){push(10)};
+    \draw[fill=gemaBlue!60,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (0,0) rectangle (1.3,0.58) node[midway,white,font=\bfseries\footnotesize]{10};
+    \draw[-{Stealth},codeGreen,line width=1.6pt] (0.65,1.5)--(0.65,0.68);
+    \node[font=\tiny,gray] at (0.65,-0.25){[10]};
+
+    \draw[-{Stealth},gray!70,line width=1pt] (1.5,0.5)--(2.0,0.5);
+
+    \node[font=\bfseries\small,gemaBlue] at (2.85,3.4){push(20)};
+    \draw[fill=gemaBlue!40,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (2.2,0) rectangle (3.5,0.58) node[midway,white,font=\bfseries\footnotesize]{10};
+    \draw[fill=gemaBlue!70,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (2.2,0.66) rectangle (3.5,1.24) node[midway,white,font=\bfseries\footnotesize]{20};
+    \draw[-{Stealth},codeGreen,line width=1.6pt] (2.85,1.5)--(2.85,1.33);
+    \node[font=\tiny,gray] at (2.85,-0.25){[10,20]};
+
+    \draw[-{Stealth},gray!70,line width=1pt] (3.7,0.5)--(4.2,0.5);
+
+    \node[font=\bfseries\small,gemaBlue] at (5.05,3.4){push(30)};
+    \draw[fill=gemaBlue!30,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (4.4,0) rectangle (5.7,0.58) node[midway,white,font=\bfseries\footnotesize]{10};
+    \draw[fill=gemaBlue!55,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (4.4,0.66) rectangle (5.7,1.24) node[midway,white,font=\bfseries\footnotesize]{20};
+    \draw[fill=gemaBlue!80,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (4.4,1.32) rectangle (5.7,1.90) node[midway,white,font=\bfseries\footnotesize]{30};
+    \draw[-{Stealth},codeGreen,line width=1.6pt] (5.05,2.2)--(5.05,1.99);
+    \node[font=\tiny,gray] at (5.05,-0.25){[10,20,30]};
+
+    \draw[-{Stealth},gray!70,line width=1pt] (5.9,0.5)--(6.4,0.5);
+
+    \node[font=\bfseries\small,gemaRed] at (7.25,3.4){pop()};
+    \draw[fill=gemaBlue!30,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (6.6,0) rectangle (7.9,0.58) node[midway,white,font=\bfseries\footnotesize]{10};
+    \draw[fill=gemaBlue!55,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (6.6,0.66) rectangle (7.9,1.24) node[midway,white,font=\bfseries\footnotesize]{20};
+    \draw[fill=gemaRed!30,draw=gemaRed,rounded corners=2pt,line width=0.8pt,dashed]
+      (6.6,1.32) rectangle (7.9,1.90) node[midway,gemaRed,font=\bfseries\footnotesize]{30 \texttimes};
+    \draw[-{Stealth},gemaRed,line width=1.8pt,dashed] (7.25,1.90)--(7.25,2.4);
+    \node[font=\tiny,gray] at (7.25,-0.25){[10,20]};
+
+    \draw[-{Stealth},gray!70,line width=1pt] (8.1,0.5)--(8.6,0.5);
+
+    \node[font=\bfseries\small,gemaCyan!70!black] at (9.5,3.4){top()};
+    \draw[fill=gemaBlue!30,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (8.85,0) rectangle (10.15,0.58) node[midway,white,font=\bfseries\footnotesize]{10};
+    \draw[fill=gemaBlue!80,draw=gemaBlue,rounded corners=2pt,line width=0.6pt]
+      (8.85,0.66) rectangle (10.15,1.24) node[midway,white,font=\bfseries\footnotesize]{20};
+    \draw[-{Stealth},gemaCyan,line width=1.8pt] (10.7,0.95)--(10.2,0.95);
+    \node[right,gemaCyan,font=\bfseries\small] at (10.7,0.95){= 20};
+    \node[font=\tiny,gray] at (9.5,-0.25){[10,20]};
+
+    \node[font=\footnotesize,gray] at (5.0,-0.75)
+      {push empilha no topo $\cdot$ pop retira do topo $\cdot$ top apenas le sem remover};
+  \end{tikzpicture}
+  \end{adjustbox}
+\end{frame}
+
+\begin{frame}{Operacoes Principais da Stack}
+  \begin{columns}[t]
+    \column{0.31\textwidth}
+      \begin{exampleblock}{push(x)}
+        \small
+        Insere \texttt{x} no topo.\\[4pt]
+        \textbf{O(1)} sempre.\\[4pt]
+        Nunca falha por si so.
+      \end{exampleblock}
+    \column{0.31\textwidth}
+      \begin{alertblock}{pop()}
+        \small
+        Remove o topo.\\[4pt]
+        \textbf{O(1)}\\[4pt]
+        \textcolor{gemaRed}{\textbf{CRASH se vazia!}}
+      \end{alertblock}
+    \column{0.31\textwidth}
+      \begin{block}{top()}
+        \small
+        Retorna o topo sem remover.\\[4pt]
+        \textbf{O(1)}\\[4pt]
+        \textcolor{gemaRed}{\textbf{CRASH se vazia!}}
+      \end{block}
+  \end{columns}
+  \vspace{0.2cm}
+  \begin{columns}[t]
+    \column{0.31\textwidth}
+      \begin{block}{empty()}
+        \small
+        \texttt{true} se pilha vazia.\\[4pt]
+        \textbf{Use SEMPRE antes} de \texttt{top()} e \texttt{pop()}.
+      \end{block}
+    \column{0.31\textwidth}
+      \begin{block}{size()}
+        \small
+        Numero de elementos.\\[4pt]
+        \textbf{O(1)}
+      \end{block}
+    \column{0.31\textwidth}
+      \begin{tcolorbox}[caixaVerde,title={Dica de Prova}]
+        \small
+        Antes de qualquer acesso ao topo:\\[3pt]
+        \textbf{sempre verifique}\\
+        \texttt{!st.empty()}
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=8]{Implementacao em C++ --- STL}
+  \begin{columns}[t]
+    \column{0.60\textwidth}
+      \begin{tcolorbox}[caixaCodigo]
+        \begin{lstlisting}[style=cppcompact]
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    stack<int> st; // pilha de inteiros
+
+    st.push(10);   // insere 10 no topo
+    st.push(20);   // insere 20 no topo
+    st.push(30);   // insere 30 no topo
+
+    // SEMPRE verifica antes de acessar!
+    cout << st.top() << "\n"; // 30
+    st.pop();                 // remove 30
+    cout << st.top() << "\n"; // 20
+    cout << st.size() << "\n";// 2
+
+    while (!st.empty()) {
+        cout << st.top() << " ";
+        st.pop();
+    }
+    // saida final: 20 10
+    return 0;
+}
+        \end{lstlisting}
+      \end{tcolorbox}
+    \column{0.37\textwidth}
+      \begin{tcolorbox}[caixaAzul,title={Resumo STL}]
+        \footnotesize
+        \begin{tabular}{@{}ll@{}}
+          \texttt{push(x)} & insere\\[3pt]
+          \texttt{pop()}   & remove\\[3pt]
+          \texttt{top()}   & le topo\\[3pt]
+          \texttt{empty()} & vazia?\\[3pt]
+          \texttt{size()}  & quantos?\\
+        \end{tabular}
+      \end{tcolorbox}
+      \vspace{0.18cm}
+      \begin{tcolorbox}[caixaVermelho,title={Tipos possiveis}]
+        \footnotesize
+        \texttt{stack<int>}\\
+        \texttt{stack<long long>}\\
+        \texttt{stack<char>}\\
+        \texttt{stack<string>}\\
+        \texttt{stack<pair<int,int>>}
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=8]{Aplicacao Classica --- Parenteses Balanceados}
+  \begin{columns}[c]
+    \column{0.44\textwidth}
+      \begin{tcolorbox}[caixaAzul,title={Problema}]
+        \small Dada uma string com \texttt{( ) [ ] \{ \}},
+        verificar se esta corretamente balanceada.
+      \end{tcolorbox}
+      \vspace{0.15cm}
+      \textbf{Estrategia:}
+      \begin{itemize}\small
+        \item Abre $\to$ \texttt{push} na pilha
+        \item Fecha $\to$ verifica topo e \texttt{pop}
+        \item Ao final: pilha vazia = valido
+      \end{itemize}
+      \vspace{0.15cm}
+      \begin{tikzpicture}[scale=0.90]
+        \node[font=\ttfamily\small,codeGreen!55!black]
+          at (0,0.8){\textbf{(\{[]\})} $\to$ VALIDO};
+        \node[font=\ttfamily\small,gemaRed]
+          at (0,0.2){\textbf{(\{[\}])} $\to$ INVALIDO};
+        \node[font=\ttfamily\small,gemaRed]
+          at (0,-0.4){\textbf{(()}\ \ \ \ $\to$ INVALIDO};
+      \end{tikzpicture}
+    \column{0.54\textwidth}
+      \begin{tcolorbox}[caixaCodigo]
+        \begin{lstlisting}[style=cppcompact]
+bool valida(string s) {
+    stack<char> st;
+    for (char c : s) {
+        // abre: empilha
+        if (c=='('||c=='['||c=='{')
+            st.push(c);
+        else {
+            if (st.empty()) return false;
+            char t = st.top();
+            st.pop();
+            if (c==')' && t!='(') return false;
+            if (c==']' && t!='[') return false;
+            if (c=='}' && t!='{') return false;
+        }
+    }
+    // sobrou na pilha = invalido
+    return st.empty();
+}
+        \end{lstlisting}
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+{
+\setbeamertemplate{footline}{}
+\begin{frame}[noframenumbering]
+  \centering\vspace{1.2cm}
+  {\fontsize{40}{48}\selectfont\bfseries\color{gemaBlue} 2}\par
+  \vspace{0.3cm}
+  {\Large\color{gemaCyan}\bfseries Stack Monotonica}\par
+  \vspace{0.2cm}
+  {\color{gray}\small Intuicao $\cdot$ Tipos $\cdot$ Aplicacoes em Maratonas}
+\end{frame}
+}
+
+\begin{frame}{Motivacao --- Por que Stack Monotonica?}
+  \begin{tcolorbox}[caixaAzul,title={Problema Central}]
+    Dado um array, para cada posicao $i$ encontre o
+    \textbf{proximo elemento maior} a direita.\\[4pt]
+    Exemplo: \quad
+    \texttt{[4,\ 5,\ 2,\ 10,\ 8]}
+    $\;\longrightarrow\;$
+    \texttt{[5,\ 10,\ 10,\ -1,\ -1]}
+  \end{tcolorbox}
+  \vspace{0.2cm}
+  \begin{columns}[t]
+    \column{0.46\textwidth}
+      \begin{alertblock}{Forca Bruta --- O($n^2$)}
+        \begin{itemize}\small
+          \item Para cada \texttt{i}, varre todos \texttt{j > i}
+          \item $n = 10^5 \Rightarrow 10^{10}$ operacoes
+          \item $n = 5{\times}10^5 \Rightarrow$ \textbf{250 bilhoes!}
+          \item \textbf{TLE garantido}
+        \end{itemize}
+      \end{alertblock}
+    \column{0.50\textwidth}
+      \begin{exampleblock}{Stack Monotonica --- O($n$)}
+        \begin{itemize}\small
+          \item Cada elemento entra na pilha \textbf{1 vez}
+          \item Cada elemento sai da pilha \textbf{1 vez}
+          \item Total: no maximo $2n$ operacoes
+          \item \textbf{Argumento de amortizacao}
+        \end{itemize}
+      \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=5]{Stack Monotonica --- Visualizacao Completa}
+  \centering
+  {\small\bfseries Array: [4, 5, 2, 10, 8] --- Stack Decrescente}
+  \vspace{0.08cm}
+
+  \begin{adjustbox}{max totalsize={0.98\textwidth}{0.52\textheight},center}
+  \begin{tikzpicture}[scale=0.80]
+    \node[font=\bfseries\footnotesize,gemaBlue] at (1.0,4.2){$i=0,\ a[0]=4$};
+    \node[font=\tiny,codeGreen!55!black] at (1.0,3.75){push(0)};
+    \draw[fill=gemaBlue!55,draw=gemaBlue,rounded corners=2pt]
+      (0.15,0) rectangle (1.85,0.56)
+      node[midway,white,font=\tiny\bfseries]{idx 0 (val 4)};
+    \node[font=\tiny,gemaCyan] at (1.0,0.72){TOPO};
+    \draw[-{Stealth[length=4pt]},gemaCyan,thin](1.0,0.66)--(1.0,0.60);
+    \node[font=\tiny,gray] at (1.0,-0.28){pilha: [0]};
+
+    \draw[-{Stealth},gray!60,line width=0.9pt](2.05,0.45)--(2.55,0.45);
+
+    \node[font=\bfseries\footnotesize,gemaBlue] at (3.45,4.2){$i=1,\ a[1]=5$};
+    \node[font=\tiny,gemaRed] at (3.45,3.85){$5>4$: pop idx 0};
+    \node[font=\tiny,codeGreen!55!black] at (3.45,3.55){resp[0]=\textbf{5}, push(1)};
+    \draw[fill=gemaBlue!75,draw=gemaBlue,rounded corners=2pt]
+      (2.6,0) rectangle (4.3,0.56)
+      node[midway,white,font=\tiny\bfseries]{idx 1 (val 5)};
+    \node[font=\tiny,gemaCyan] at (3.45,0.72){TOPO};
+    \draw[-{Stealth[length=4pt]},gemaCyan,thin](3.45,0.66)--(3.45,0.60);
+    \node[font=\tiny,gray] at (3.45,-0.28){pilha: [1]};
+
+    \draw[-{Stealth},gray!60,line width=0.9pt](4.48,0.45)--(4.98,0.45);
+
+    \node[font=\bfseries\footnotesize,gemaBlue] at (6.1,4.2){$i=2,\ a[2]=2$};
+    \node[font=\tiny,codeGreen!55!black] at (6.1,3.75){$2<5$: push(2)};
+    \draw[fill=gemaBlue!55,draw=gemaBlue,rounded corners=2pt]
+      (5.25,0) rectangle (6.95,0.56)
+      node[midway,white,font=\tiny\bfseries]{idx 1 (val 5)};
+    \draw[fill=gemaBlue!80,draw=gemaBlue,rounded corners=2pt]
+      (5.25,0.64) rectangle (6.95,1.20)
+      node[midway,white,font=\tiny\bfseries]{idx 2 (val 2)};
+    \node[font=\tiny,gemaCyan] at (6.1,1.37){TOPO};
+    \draw[-{Stealth[length=4pt]},gemaCyan,thin](6.1,1.30)--(6.1,1.24);
+    \node[font=\tiny,gray] at (6.1,-0.28){pilha: [1,2]};
+
+    \draw[-{Stealth},gray!60,line width=0.9pt](7.15,0.45)--(7.65,0.45);
+
+    \node[font=\bfseries\footnotesize,gemaBlue] at (9.1,4.2){$i=3,\ a[3]=10$};
+    \node[font=\tiny,gemaRed] at (9.1,3.88){$10>2$: pop 2, resp[2]=\textbf{10}};
+    \node[font=\tiny,gemaRed] at (9.1,3.58){$10>5$: pop 1, resp[1]=\textbf{10}};
+    \node[font=\tiny,codeGreen!55!black] at (9.1,3.28){push(3)};
+    \draw[fill=gemaBlue!90,draw=gemaBlue,rounded corners=2pt]
+      (8.25,0) rectangle (9.95,0.56)
+      node[midway,white,font=\tiny\bfseries]{idx 3 (val 10)};
+    \node[font=\tiny,gemaCyan] at (9.1,0.72){TOPO};
+    \draw[-{Stealth[length=4pt]},gemaCyan,thin](9.1,0.66)--(9.1,0.60);
+    \node[font=\tiny,gray] at (9.1,-0.28){pilha: [3]};
+
+    \draw[-{Stealth},gray!60,line width=0.9pt](10.15,0.45)--(10.65,0.45);
+
+    \node[font=\bfseries\footnotesize,gemaBlue] at (11.8,4.2){$i=4,\ a[4]=8$};
+    \node[font=\tiny,codeGreen!55!black] at (11.8,3.75){$8<10$: push(4)};
+    \draw[fill=gemaBlue!70,draw=gemaBlue,rounded corners=2pt]
+      (10.95,0) rectangle (12.65,0.56)
+      node[midway,white,font=\tiny\bfseries]{idx 3 (val 10)};
+    \draw[fill=gemaBlue!50,draw=gemaBlue,rounded corners=2pt]
+      (10.95,0.64) rectangle (12.65,1.20)
+      node[midway,white,font=\tiny\bfseries]{idx 4 (val 8)};
+    \node[font=\tiny,gemaCyan] at (11.8,1.37){TOPO};
+    \draw[-{Stealth[length=4pt]},gemaCyan,thin](11.8,1.30)--(11.8,1.24);
+    \node[font=\tiny,gray] at (11.8,-0.28){pilha: [3,4]};
+  \end{tikzpicture}
+  \end{adjustbox}
+
+  \vspace{0.1cm}
+  \begin{columns}
+    \column{0.50\textwidth}
+      \begin{tcolorbox}[caixaVerde,title={Chave}]
+        \footnotesize
+        Ao \textbf{pop}: o elemento atual e o \textbf{proximo maior} do que saiu.
+      \end{tcolorbox}
+    \column{0.47\textwidth}
+      \begin{tcolorbox}[caixaAzul,title={Resultado}]
+        \footnotesize
+        idx 3,4 sobraram $\Rightarrow$ resp = \textbf{-1}\\
+        \texttt{resp = [5, 10, 10, -1, -1]}
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=6]{Crescente vs.\ Decrescente --- Comparacao Visual}
+  \begin{columns}[t]
+    \column{0.48\textwidth}
+      \begin{tcolorbox}[caixaVerde,title={Stack Crescente (fundo $\to$ topo $\nearrow$)}]
+        \small
+        \textbf{Pop} quando novo elemento e \textbf{menor}.\\
+        Uso: achar \textbf{proximo menor}.\\[4pt]
+        \centering
+        \begin{tikzpicture}[scale=0.70]
+          \draw[fill=codeGreen!25,draw=codeGreen!60!black,rounded corners=2pt]
+            (0,0) rectangle (1.8,0.50) node[midway,font=\tiny\bfseries]{2};
+          \draw[fill=codeGreen!50,draw=codeGreen!60!black,rounded corners=2pt]
+            (0,0.58) rectangle (1.8,1.08) node[midway,font=\tiny\bfseries]{4};
+          \draw[fill=codeGreen!75,draw=codeGreen!60!black,rounded corners=2pt]
+            (0,1.16) rectangle (1.8,1.66) node[midway,font=\tiny\bfseries]{7};
+          \node[right,font=\tiny,codeGreen!45!black] at (1.9,0.83){TOPO};
+          \node[font=\tiny,gray,below] at (0.9,0){fundo: 2 $<$ 4 $<$ 7 \checkmark};
+        \end{tikzpicture}
+      \end{tcolorbox}
+    \column{0.48\textwidth}
+      \begin{tcolorbox}[caixaVermelho,title={Stack Decrescente (fundo $\to$ topo $\searrow$)}]
+        \small
+        \textbf{Pop} quando novo elemento e \textbf{maior}.\\
+        Uso: achar \textbf{proximo maior}.\\[4pt]
+        \centering
+        \begin{tikzpicture}[scale=0.70]
+          \draw[fill=gemaRed!25,draw=gemaRed,rounded corners=2pt]
+            (0,0) rectangle (1.8,0.50) node[midway,font=\tiny\bfseries]{9};
+          \draw[fill=gemaRed!45,draw=gemaRed,rounded corners=2pt]
+            (0,0.58) rectangle (1.8,1.08) node[midway,font=\tiny\bfseries]{5};
+          \draw[fill=gemaRed!70,draw=gemaRed,rounded corners=2pt]
+            (0,1.16) rectangle (1.8,1.66) node[midway,font=\tiny\bfseries]{3};
+          \node[right,font=\tiny,gemaRed] at (1.9,0.83){TOPO};
+          \node[font=\tiny,gray,below] at (0.9,0){fundo: 9 $>$ 5 $>$ 3 \checkmark};
+        \end{tikzpicture}
+      \end{tcolorbox}
+  \end{columns}
+  \vspace{0.1cm}
+  \begin{tcolorbox}[caixaAzul,title={Tabela de Referencia Rapida}]
+    \centering\small
+    \begin{tabular}{lccc}
+      \toprule
+      \textbf{O que buscar} & \textbf{Stack} & \textbf{Loop} & \textbf{Condicao de pop}\\
+      \midrule
+      Proximo \textbf{maior}  & Decrescente & $\to$ & \texttt{arr[i] > arr[topo]}\\
+      Proximo \textbf{menor}  & Crescente   & $\to$ & \texttt{arr[i] < arr[topo]}\\
+      Anterior \textbf{maior} & Decrescente & $\leftarrow$ & \texttt{arr[i] > arr[topo]}\\
+      Anterior \textbf{menor} & Crescente   & $\leftarrow$ & \texttt{arr[i] < arr[topo]}\\
+      \bottomrule
+    \end{tabular}
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile,shrink=8]{Esqueleto Universal --- Decore Este Padrao}
+  \begin{tcolorbox}[caixaAzul,title={Padrao que resolve 80\% dos problemas de stack monotonica}]
+    \small
+    O mesmo esqueleto resolve proximo maior, proximo menor, anterior maior,
+    anterior menor --- basta trocar o operador e a direcao do loop.
+  \end{tcolorbox}
+  \vspace{0.08cm}
+  \begin{tcolorbox}[caixaCodigo]
+    \begin{lstlisting}[style=cppcompact]
+stack<int> st;             // guarda INDICES (nunca valores!)
+vector<int> resp(n, -1);   // resposta padrao = -1
+
+for (int i = 0; i < n; i++) {
+    // enquanto novo elemento "quebra" a monotonia da pilha:
+    while (!st.empty() && arr[st.top()] < arr[i]) {
+        // arr[i] e o "proximo maior" do indice no topo
+        resp[st.top()] = arr[i];  // ou = i, depende do problema
+        st.pop();
+    }
+    st.push(i);  // empilha o indice atual
+}
+// quem sobrou na pilha -> resp ja e -1
+    \end{lstlisting}
+  \end{tcolorbox}
+  \vspace{0.05cm}
+  \begin{tcolorbox}[caixaAmarelo,title={Por que guardar indices e nao valores?}]
+    \small
+    Com o \textbf{indice} voce acessa \texttt{arr[idx]}, \texttt{resp[idx]},
+    a posicao original --- qualquer informacao.
+    Com o \textbf{valor} voce perde a posicao e nao consegue atualizar \texttt{resp}.
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile,shrink=10]{Next Greater Element --- Codigo Completo}
+  \begin{columns}[t]
+    \column{0.60\textwidth}
+      \begin{tcolorbox}[caixaCodigo]
+        \begin{lstlisting}[style=cppcompact]
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+    vector<int> a(n), resp(n, -1);
+    for(int i = 0; i < n; i++) cin >> a[i];
+
+    stack<int> st; // indices pendentes
+
+    for(int i = 0; i < n; i++){
+        // a[i] maior que o topo?
+        // -> a[i] e o proximo maior do topo
+        while(!st.empty() && a[i] > a[st.top()]){
+            resp[st.top()] = a[i];
+            st.pop();
+        }
+        st.push(i);
+    }
+
+    // quem sobrou: sem proximo maior
+    for(int i = 0; i < n; i++)
+        cout << resp[i] << " \n"[i==n-1];
+
+    return 0;
+}
+        \end{lstlisting}
+      \end{tcolorbox}
+    \column{0.37\textwidth}
+      \begin{tcolorbox}[caixaVerde,title={Exemplo}]
+        \footnotesize
+        \textbf{Entrada:}\\
+        \texttt{5}\\
+        \texttt{4 5 2 10 8}\\[6pt]
+        \textbf{Saida:}\\
+        \texttt{5 10 10 -1 -1}
+      \end{tcolorbox}
+      \vspace{0.12cm}
+      \begin{tcolorbox}[caixaAzul,title={Complexidade}]
+        \footnotesize
+        \textbf{Tempo:} O($n$)\\
+        cada elemento:\\
+        1 push + 1 pop max.\\[4pt]
+        \textbf{Espaco:} O($n$)
+      \end{tcolorbox}
+      \vspace{0.12cm}
+      \begin{tcolorbox}[caixaVermelho,title={Variacoes}]
+        \footnotesize
+        Proximo \textbf{menor}:\\
+        mude \texttt{>} para \texttt{<}\\[3pt]
+        \textbf{Indice} do proximo:\\
+        \texttt{resp[st.top()] = i+1}
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=6]{Maior Retangulo no Histograma --- Intuicao}
+  \begin{columns}[c]
+    \column{0.50\textwidth}
+      \begin{tcolorbox}[caixaAzul,title={Problema}]
+        \small Dado histograma com barras de largura 1,
+        encontre a area do \textbf{maior retangulo} possivel.
+      \end{tcolorbox}
+      \vspace{0.1cm}
+      \textbf{Ideia:} para cada barra $i$ como ``teto'':
+      \[
+        \text{area}(i) = h[i] \times (\texttt{dir} - \texttt{esq} - 1)
+      \]
+      onde \texttt{esq} = anterior menor e \texttt{dir} = proximo menor.
+      \vspace{0.1cm}
+      \begin{tcolorbox}[caixaVerde,title={Tecnica}]
+        \small
+        Stack \textbf{crescente}: ao fazer pop do indice \texttt{t},
+        o elemento que causou o pop e o \textbf{proximo menor}
+        e o novo topo e o \textbf{anterior menor}.
+      \end{tcolorbox}
+    \column{0.48\textwidth}
+      \centering
+      \begin{adjustbox}{max totalsize={0.96\textwidth}{0.48\textheight},center}
+      \begin{tikzpicture}[scale=0.72]
+        \foreach \i/\h/\shade in {
+          0/2/35, 1/1/25, 2/5/65, 3/6/85, 4/2/40, 5/3/55}{
+          \draw[fill=gemaBlue!\shade,draw=gemaBlue!60,line width=0.5pt]
+            (\i,0) rectangle (\i+1,\h);
+          \node[font=\tiny,gray] at (\i+0.5,-0.35){\h};
+        }
+        \draw[gemaRed,line width=2pt,dashed]
+          (2,0) rectangle (4,5);
+        \node[gemaRed,font=\bfseries\small] at (3,5.5){Area = 10};
+        \draw[gray,thin] (-0.1,0)--(6.1,0);
+        \node[font=\tiny,gray] at (3,-0.75){h = [2, 1, 5, 6, 2, 3]};
+        \draw[decorate,decoration={brace,amplitude=4pt},gemaRed]
+          (2,5.15)--(4,5.15) node[midway,above=3pt,gemaRed,font=\tiny]{larg=2};
+        \draw[decorate,decoration={brace,mirror,amplitude=4pt},gemaRed]
+          (4.1,0)--(4.1,5) node[midway,right=3pt,gemaRed,font=\tiny]{h=5};
+      \end{tikzpicture}
+      \end{adjustbox}
+      \vspace{0.05cm}
+      \begin{tcolorbox}[caixaVermelho,title={}]
+        \footnotesize
+        Use \texttt{long long}: area pode ser $10^{14}$.
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile,shrink=12]{Maior Retangulo no Histograma --- Codigo}
+  \begin{tcolorbox}[caixaCodigo]
+    \begin{lstlisting}[style=cppcompact]
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n; cin >> n;
+    vector<long long> h(n);
+    for(int i = 0; i < n; i++) cin >> h[i];
+
+    stack<int> st;       // stack CRESCENTE de indices
+    long long maximo = 0;
+
+    // sentinela 0 no final para esvaziar a pilha
+    for(int i = 0; i <= n; i++){
+        long long cur = (i == n) ? 0 : h[i];
+
+        // cur menor que topo -> topo encontrou proximo menor
+        while(!st.empty() && h[st.top()] > cur){
+            long long altura = h[st.top()];
+            st.pop();
+
+            // anterior menor = novo topo (ou -1 se vazia)
+            long long esq = st.empty() ? 0 : st.top() + 1;
+            long long largura = i - esq;
+            maximo = max(maximo, altura * largura);
+        }
+
+        st.push(i);
+    }
+
+    cout << maximo << "\n";
+    return 0;
+}
+    \end{lstlisting}
+  \end{tcolorbox}
+  \vspace{0.05cm}
+  \begin{tcolorbox}[caixaVerde,title={h = [2,1,5,6,2,3] --- Saida: 10}]
+    \footnotesize
+    A sentinela \texttt{cur=0} no final forca o esvaziamento da pilha,
+    calculando a area de quem ainda estava pendente.
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile,shrink=10]{Problema Estilo OBI --- Indice do Proximo Maior}
+  \begin{tcolorbox}[caixaAzul,title={Enunciado}]
+    \small
+    Dado um array de $n$ inteiros ($n \le 10^5$), para cada posicao $i$
+    imprima o \textbf{indice} base 1 do primeiro elemento a direita maior que $a[i]$,
+    ou $-1$ se nao existir.\\[3pt]
+    \textbf{Entrada:} \texttt{5} $|$ \texttt{4 5 2 10 8}
+    \qquad
+    \textbf{Saida:} \texttt{2 4 4 -1 -1}
+  \end{tcolorbox}
+  \vspace{0.05cm}
+  \begin{columns}[t]
+    \column{0.57\textwidth}
+      \begin{tcolorbox}[caixaCodigo]
+        \begin{lstlisting}[style=cppcompact]
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    int n; cin >> n;
+    vector<int> a(n), resp(n, -1);
+    for(int i = 0; i < n; i++) cin >> a[i];
+
+    stack<int> st;
+    for(int i = 0; i < n; i++){
+        while(!st.empty() && a[i] > a[st.top()]){
+            resp[st.top()] = i + 1; // base 1
+            st.pop();
+        }
+        st.push(i);
+    }
+
+    for(int i = 0; i < n; i++)
+        cout << resp[i] << " \n"[i==n-1];
+}
+        \end{lstlisting}
+      \end{tcolorbox}
+    \column{0.40\textwidth}
+      \begin{tcolorbox}[caixaAmarelo,title={Checklist antes de codar}]
+        \footnotesize
+        $\square$ Proximo maior ou menor?\\[3pt]
+        $\square$ A esquerda ou direita?\\[3pt]
+        $\square$ Resposta: valor ou indice?\\[3pt]
+        $\square$ Base 0 ou base 1?\\[3pt]
+        $\square$ Default para quem sobra?\\[3pt]
+        $\square$ Precisa de \texttt{long long}?
+      \end{tcolorbox}
+      \vspace{0.12cm}
+      \begin{tcolorbox}[caixaVerde,title={Anterior maior/menor}]
+        \footnotesize
+        Troque a direcao do loop:\\
+        \texttt{for(int i=n-1;i>=0;i--)}\\[3pt]
+        E use a mesma logica de pop!
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[shrink=4]{Como Identificar na Prova?}
+  \begin{columns}[t]
+    \column{0.47\textwidth}
+      \begin{block}{Palavras-chave no enunciado}
+        \begin{itemize}\small
+          \item ``proximo maior / menor elemento''
+          \item ``primeiro a esquerda / direita que\ldots''
+          \item ``area maxima'', ``retangulo''
+          \item ``visibilidade'' (predios, montanhas)
+          \item ``dominancia entre elementos''
+          \item ``temperatura mais alta antes de''
+        \end{itemize}
+      \end{block}
+    \column{0.50\textwidth}
+      \begin{exampleblock}{Sinais na estrutura do problema}
+        \begin{itemize}\small
+          \item $n \le 10^5$ com TL curto $\Rightarrow$ O($n^2$) nao passa
+          \item ``Para cada posicao, encontre\ldots''
+          \item Resposta de $i$ depende de min/max de um intervalo
+          \item Versao facil ($n \le 1000$) existe
+          \item Versao dificil pede O($n$)
+        \end{itemize}
+      \end{exampleblock}
+  \end{columns}
+  \vspace{0.15cm}
+  \begin{tcolorbox}[caixaAmarelo,title={Armadilha Classica das Maratonas}]
+    \small
+    A versao facil aceita O($n^2$). A versao dificil tem $n \le 5{\times}10^5$
+    e exige stack monotonica. \textbf{Aprenda O($n$) desde o inicio}.
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink=5]{Dicas de Prova}
+  \begin{columns}[t]
+    \column{0.47\textwidth}
+      \begin{tcolorbox}[caixaVerde,title={Boas Praticas}]
+        \begin{itemize}\small
+          \item Guarde \textbf{indices} na pilha, nao valores
+          \item Verifique \texttt{!st.empty()} antes de \texttt{top()} e \texttt{pop()}
+          \item Defina o valor padrao da resposta antes do loop
+          \item Teste: crescente, decrescente, constante, tamanho 1
+          \item Use \texttt{long long} quando valores forem grandes
+          \item Sentinela esvazia a pilha no final
+        \end{itemize}
+      \end{tcolorbox}
+    \column{0.50\textwidth}
+      \begin{tcolorbox}[caixaVermelho,title={Erros Frequentes}]
+        \begin{itemize}\small
+          \item \texttt{top()} ou \texttt{pop()} em pilha vazia $\to$ \textbf{crash}
+          \item Usar \texttt{<} quando devia ser \texttt{<=}
+          \item Esquecer indices que sobraram na pilha
+          \item Confundir ``proximo'' com ``anterior''
+          \item Saida em base 0 quando pede base 1
+        \end{itemize}
+      \end{tcolorbox}
+  \end{columns}
+  \vspace{0.12cm}
+  \begin{tcolorbox}[caixaAzul,title={Template Mental --- decore este padrao}]
+    \centering\ttfamily\small
+    while (!st.empty() \&\& CONDICAO) \{\ REGISTRA;\ st.pop();\ \}\ st.push(i);
+  \end{tcolorbox}
+\end{frame}
+
+\begin{frame}[shrink=6]{Resumo Geral}
+  \begin{columns}[t]
+    \column{0.47\textwidth}
+      \begin{block}{Stack Classica}
+        \begin{itemize}\small
+          \item LIFO --- Last In, First Out
+          \item Operacoes O(1): \texttt{push}, \texttt{pop}, \texttt{top}, \texttt{empty}
+          \item Usos: parenteses, undo/redo, expressoes
+          \item \texttt{std::stack<T>} na STL C++
+        \end{itemize}
+      \end{block}
+      \vspace{0.12cm}
+      \begin{tcolorbox}[caixaVerde,title={Problemas para Praticar}]
+        \footnotesize
+        \begin{itemize}
+          \item Histogram \textbf{(obrigatorio!)}
+          \item CF 1313C2 --- Skyscrapers Hard
+          \item CF 547B --- Nearest Smaller
+          \item CF 281D --- Maximum Xor Secondary
+        \end{itemize}
+      \end{tcolorbox}
+    \column{0.50\textwidth}
+      \begin{block}{Stack Monotonica}
+        \begin{itemize}\small
+          \item Mantem ordem crescente ou decrescente
+          \item Max. 1 push + 1 pop por elemento $\Rightarrow$ \textbf{O($n$)}
+          \item Decrescente $\to$ proximo \textbf{maior}
+          \item Crescente $\to$ proximo \textbf{menor}
+          \item Loop invertido $\to$ anterior maior/menor
+          \item \textbf{Guarde indices, nao valores!}
+        \end{itemize}
+      \end{block}
+      \vspace{0.12cm}
+      \begin{tcolorbox}[caixaVermelho,title={Regra de Ouro}]
+        \footnotesize
+        \textbf{Ao fazer pop}, o elemento atual e a resposta para o indice que saiu.\\[3pt]
+        Sobrou na pilha $\Rightarrow$ resposta e \textbf{-1}.
+      \end{tcolorbox}
+  \end{columns}
+\end{frame}
+
+{
+\setbeamertemplate{footline}{}
+\begin{frame}[noframenumbering]
+  \centering
+  \vspace{0.2cm}
+  \begin{columns}[c]
+    \column{0.32\textwidth}
+      \centering
+      \includegraphics[width=0.68\linewidth]{logo.png}
+    \column{0.34\textwidth}
+      \centering
+      {\Large\color{gemaBlue}\bfseries Bons estudos\\e boa prova!}\par
+      \vspace{0.15cm}
+      {\small\color{gemaCyan} GEMA --- Grupo de Extensão em Maratonas de Programacao}
+    \column{0.32\textwidth}
+      \centering
+        \includegraphics[width=0.72\textwidth]{images (2).png}
+      % \begin{tcolorbox}[
+      %   enhanced,arc=6pt,boxrule=1.5pt,
+      %   colback=white,colframe=gemaBlue!40,
+      %   left=5pt,right=5pt,top=5pt,bottom=5pt,
+      % ]
+        % \centering
+        % \color{gemaBlue!50}\small\bfseries [Logo OBI]\\
+      % \end{tcolorbox}
+  \end{columns}
+  \vspace{0.25cm}
+  \begin{tcolorbox}[caixaAzul,title={},width=0.75\textwidth]
+    \centering\small
+    \textbf{Pratique:}
+    \texttt{codeforces.com} $\cdot$ \texttt{neps.com.br}\\[4pt]
+    \textbf{Estude:}
+    cp-algorithms.com $\cdot$ USACO Guide\\[4pt]
+    \textbf{Competições:}
+    OBI $\cdot$ ICPC $\cdot$ Codeforces Div.\ 4
+  \end{tcolorbox}
+  \vspace{0.2cm}
+  {\small\color{gray}\itshape
+    ``A melhor forma de aprender algoritmos e implementando.''}
+\end{frame}
+}
+
+\end{document}
